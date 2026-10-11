@@ -33,11 +33,15 @@ public class SupabaseStudentRepository {
      * Inserts a student profile into public.students following successful Supabase Auth signup.
      * NEVER stores passwords.
      *
+     * @deprecated Deprecated as student profiles in public.students are now created automatically
+     *             by the Supabase database trigger 'on_auth_user_created' executing 'public.handle_new_student()'
+     *             on auth.users AFTER INSERT. Direct client INSERT is blocked by Row Level Security (RLS).
      * @param userId             The authenticated Supabase Auth user UUID.
      * @param fullName           The entered student name.
      * @param registrationNumber The entered registration number.
      * @param email              The entered college email.
      */
+    @Deprecated
     public void insertStudentProfile(String userId, String fullName, String registrationNumber, String email) throws Exception {
         if (userId == null || userId.trim().isEmpty()) {
             throw new IllegalArgumentException("User UUID cannot be empty.");

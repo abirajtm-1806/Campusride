@@ -338,7 +338,7 @@ public class CampusRideUI {
             Student newStudent = new Student(name, regNum, email, password);
 
             try {
-                // 4, 5, 6. Call Supabase Auth signup and insert profile into public.students
+                // 4, 5, 6. Call Supabase Auth signup (public.students profile is created automatically by on_auth_user_created trigger)
                 boolean success = authService.registerStudent(newStudent);
                 if (success) {
                     // Academic file handling demonstration persistence

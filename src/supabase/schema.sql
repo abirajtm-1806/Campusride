@@ -23,17 +23,40 @@ ON public.students FOR SELECT
 TO authenticated, anon
 USING (true);
 
--- Allow students to insert their own profile record during registration
-CREATE POLICY "Students can insert their own profile"
-ON public.students FOR INSERT
-TO authenticated, anon
-WITH CHECK (true);
-
 -- Allow students to update their own profile
 CREATE POLICY "Students can update their own profile"
 ON public.students FOR UPDATE
 TO authenticated
 USING (auth.uid() = id);
+
+-- ==============================================================
+-- Supabase Auth Trigger for Student Profile Creation
+-- ==============================================================
+-- Automatically creates the corresponding public.students profile using:
+-- - auth.users.id
+-- - raw_user_meta_data.full_name
+-- - raw_user_meta_data.registration_number
+-- - auth.users.email
+-- Runs with SECURITY DEFINER so that RLS does not block automatic trigger insertion.
+CREATE OR REPLACE FUNCTION public.handle_new_student()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.students (id, full_name, registration_number, email)
+    VALUES (
+        NEW.id,
+        NEW.raw_user_meta_data->>'full_name',
+        NEW.raw_user_meta_data->>'registration_number',
+        NEW.email
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger: on_auth_user_created on auth.users
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION public.handle_new_student();
 
 
 -- 2. Table: public.rides
